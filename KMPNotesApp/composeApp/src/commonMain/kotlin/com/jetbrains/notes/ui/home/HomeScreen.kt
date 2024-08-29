@@ -129,7 +129,7 @@ fun NoteCard(note: Note, onEvent: (HomeEvent) -> Unit) {
             ) {
                 Text(text = note.title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
                 Text(text = note.email)
-                Text(text = note.createdAt.toString())
+                Text(text = formatTimestampToDateTime(note.createdAt))
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = { /* Handle edit action */ }) {
@@ -159,7 +159,7 @@ fun BottomSheet(closeBottomSheet: () -> Unit, onEvent: (HomeEvent) -> Unit) {
     ModalBottomSheet(onDismissRequest = { closeBottomSheet() }, modifier = Modifier.fillMaxSize()) {
 
         Column(
-            modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(16.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Box(modifier = Modifier.fillMaxWidth()) {
                 IconButton(
@@ -190,26 +190,26 @@ fun BottomSheet(closeBottomSheet: () -> Unit, onEvent: (HomeEvent) -> Unit) {
                 value = title,
                 onValueChange = { title = it },
                 label = { Text(text = "Title") },
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(16.dp).fillMaxWidth()
             )
 
             TextField(
                 value = description,
                 onValueChange = { description = it },
                 label = { Text(text = "Description") },
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(16.dp).fillMaxWidth()
             )
 
             TextField(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text(text = "Email") },
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(16.dp).fillMaxWidth()
             )
             TextField(value = dateOfBirth,
                 onValueChange = { dateOfBirth = it },
                 label = { Text(text = "Date of Birth") },
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(16.dp).fillMaxWidth(),
                 trailingIcon = {
                     IconButton(onClick = { isDatePickerOpen = true }) {
                         Icon(Icons.Default.DateRange, contentDescription = "Open Date Picker")
@@ -231,6 +231,9 @@ expect fun showDatePicker(
     onDateSelected: (String) -> Unit,
     onDismiss: () -> Unit
 )
+
+expect fun formatTimestampToDateTime(timestamp: Long): String
+
 
 
 
