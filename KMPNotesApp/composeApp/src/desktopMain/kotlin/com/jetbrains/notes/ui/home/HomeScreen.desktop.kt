@@ -11,11 +11,13 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.TimePickerState
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDate
@@ -112,4 +114,18 @@ actual fun formatTimestampToDateTime(timestamp: Long): String {
     val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
         .withZone(ZoneId.systemDefault())
     return formatter.format(instant)
+}
+
+actual fun taskDatePicker(
+    onDateSelected: (String) -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier
+) {
+}
+
+@Composable
+actual fun ShowTimePicker(
+    onConfirm: (TimePickerState) -> Unit,
+    onDismiss: () -> Unit
+) {
 }

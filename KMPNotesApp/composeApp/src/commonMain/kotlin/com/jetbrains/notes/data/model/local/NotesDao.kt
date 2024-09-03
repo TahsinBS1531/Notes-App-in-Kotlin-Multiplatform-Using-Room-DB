@@ -1,6 +1,7 @@
 package com.jetbrains.notes.data.model.local
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Entity
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -12,7 +13,7 @@ import kotlinx.datetime.LocalDate
 
 @Dao
 interface NotesDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun createNote(note:Note)
 
     @Query("Select * from notes where id=:id")
@@ -23,6 +24,19 @@ interface NotesDao {
 
     @Query("SELECT * FROM notes")
     fun getAllNotes(): Flow<List<Note>>
+
+    @Query("DELETE FROM notes")
+    suspend fun deleteAllNotes()
+
+    @Query("SELECT * FROM notes WHERE title LIKE '%' || :query || '%'")
+    fun searchNotes(query: String): Flow<List<Note>>
+
+    @Query("SELECT * FROM notes WHERE dateOfBirth = :dateOfBirth")
+    fun getNotesByDateOfBirth(dateOfBirth: String): Flow<List<Note>>
+
+    @Query("SELECT * FROM notes WHERE dateOfBirth = :dateOfBirth AND selectedTime >= :currentTime")
+    fun getTasksForToday(dateOfBirth: String, currentTime: String): Flow<List<Note>>
+
 
 
 }
@@ -36,4 +50,5 @@ data class Note(
     val dateOfBirth:String,
     val createdAt: Long= Clock.System.now().toEpochMilliseconds(),
     val updatedAt: Long?=null,
+    val selectedTime:String
 )

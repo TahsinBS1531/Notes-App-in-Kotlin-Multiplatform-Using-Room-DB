@@ -5,14 +5,15 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
 @Database(entities = [Note::class], version = 1)
-@TypeConverters(Converters::class)
+//@TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase(), DB {
     abstract fun getDao(): NotesDao
-    override fun clearAllTables(): Unit {}
+    override fun clearAllTables() {
+    }
 }
 
 interface DB {
-    fun clearAllTables(): Unit {}
+    fun clearAllTables()
 }
 
 internal const val DB_NAME = "notes.db"

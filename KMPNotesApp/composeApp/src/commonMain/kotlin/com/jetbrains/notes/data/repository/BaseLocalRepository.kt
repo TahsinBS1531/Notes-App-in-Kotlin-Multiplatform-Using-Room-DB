@@ -11,4 +11,10 @@ interface BaseLocalRepository {
     suspend fun deleteNoteById(noteId: Long)
 
     suspend fun getAllNotes(): Flow<List<Note>>
+
+    suspend fun deleteAllNotes()
+
+    suspend fun searchNotes(query: String): Flow<List<Note>>
+
+    suspend fun getNotesByDateOfBirth(dateOfBirth: String): Flow<List<Note>>
 }

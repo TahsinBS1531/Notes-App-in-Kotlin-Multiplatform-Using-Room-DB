@@ -28,6 +28,7 @@ sqlite = "2.5.0-SNAPSHOT"
 koin = "3.6.0-Beta4"
 koin-compose = "1.2.0-Beta4"
 coreI18n = "1.0.0-alpha01"
+voyagerVersion = "1.1.0-beta02"
 
 
 [libraries]
@@ -54,6 +55,10 @@ android-driver = { module = "app.cash.sqldelight:android-driver", version.ref = 
 sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqlite" }
 native-driver = { module = "app.cash.sqldelight:native-driver", version.ref = "sqlite-driver" }
 sqlite-driver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqlite-driver" }
+voyager-bottom-sheet-navigator = { module = "cafe.adriel.voyager:voyager-bottom-sheet-navigator", version.ref = "voyagerVersion" }
+voyager-navigator = { module = "cafe.adriel.voyager:voyager-navigator", version.ref = "voyagerVersion" }
+voyager-tab-navigator = { module = "cafe.adriel.voyager:voyager-tab-navigator", version.ref = "voyagerVersion" }
+voyager-transitions = { module = "cafe.adriel.voyager:voyager-transitions", version.ref = "voyagerVersion" }
 web-worker-driver = { module = "app.cash.sqldelight:web-worker-driver", version.ref = "sqlite-driver" }
 
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }

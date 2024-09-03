@@ -22,4 +22,16 @@ class LocalRepositoryImpl(private val local:NotesDao):BaseLocalRepository {
     override suspend fun getAllNotes(): Flow<List<Note>> {
         return local.getAllNotes()
     }
+
+    override suspend fun deleteAllNotes() {
+        local.deleteAllNotes()
+    }
+
+    override suspend fun searchNotes(query: String): Flow<List<Note>> {
+        return local.searchNotes(query)
+    }
+
+    override suspend fun getNotesByDateOfBirth(dateOfBirth: String): Flow<List<Note>> {
+        return local.getNotesByDateOfBirth(dateOfBirth)
+    }
 }

@@ -9,6 +9,6 @@ fun main() = application {
         title = "KMPNotesApp",
     ) {
         val dao = getDatabaseBuilder().getDao()
-        App(dao)
+        App(dao, notificationScheduler)
     }
 }

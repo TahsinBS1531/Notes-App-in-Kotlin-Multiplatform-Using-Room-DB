@@ -35,10 +35,11 @@ kotlin {
     sourceSets.commonMain {
         kotlin.srcDir("build/generated/ksp/metadata")
     }
+
     
     sourceSets {
         val desktopMain by getting
-        
+
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
@@ -63,6 +64,16 @@ kotlin {
             api(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.composeVM)
+            val voyagerVersion = "1.1.0-beta02"
+
+            //Voyager for navigation
+            implementation(libs.voyager.navigator)
+            implementation(libs.voyager.bottom.sheet.navigator)
+            implementation(libs.voyager.tab.navigator)
+            implementation(libs.voyager.transitions)
+
+
+
 
         }
         desktopMain.dependencies {
@@ -78,6 +89,11 @@ kotlin {
     }
 }
 
+buildscript{
+    repositories{
+        mavenCentral()
+    }
+}
 android {
     namespace = "com.jetbrains.notes"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
