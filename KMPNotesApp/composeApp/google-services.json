@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "312624712678",
+    "project_id": "kmp-notes-app",
+    "storage_bucket": "kmp-notes-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:312624712678:android:8d83833defd1ea54f32427",
+        "android_client_info": {
+          "package_name": "com.jetbrains.notes"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFl835XLg3-vu818uig-xL1UD6VOwzBRc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
