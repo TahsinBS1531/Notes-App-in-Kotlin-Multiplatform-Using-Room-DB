@@ -2,6 +2,7 @@ package com.jetbrains.notes
 
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
@@ -16,26 +17,73 @@ import com.jetbrains.notes.data.core.NotificationScheduler
 import com.jetbrains.notes.data.core.TaskReminderManager
 import com.jetbrains.notes.ui.components.AppSearchBar
 import com.jetbrains.notes.ui.components.TaskCard
+import com.jetbrains.notes.ui.home.HomeViewModel
 import com.jetbrains.notes.ui.home.taskDatePicker
+import com.mmk.kmpnotifier.notification.NotifierManager
+import com.mmk.kmpnotifier.notification.configuration.NotificationPlatformConfiguration
+import com.mmk.kmpnotifier.permission.permissionUtil
+import dev.icerock.moko.permissions.PermissionsController
+import io.github.aakira.napier.DebugAntilog
+import io.github.aakira.napier.Napier
+import io.github.vinceglb.filekit.core.FileKit
 
 class MainActivity : ComponentActivity() {
+    private lateinit var viewModel: HomeViewModel
+
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        FileKit.init(this)
 
-        setContent {
-
-            val notificationScheduler = NotificationScheduler(applicationContext)
-            val dao = getDatabaseBuilder(applicationContext).getDao()
-            TaskReminderManager().scheduleTodayTasksNotifications(
-                dao,notificationScheduler
+        NotifierManager.initialize(
+            configuration = NotificationPlatformConfiguration.Android(
+                notificationIconResId = R.drawable.ic_launcher_foreground,
             )
-            AppTheme {
-                App(dao,notificationScheduler)
+        )
+
+
+        val permissionUtil by permissionUtil()
+        permissionUtil.askNotificationPermission()
+
+//        val notifier = NotifierManager.getPushNotifier()
+
+        NotifierManager.addListener(object : NotifierManager.Listener {
+            override fun onNewToken(token: String) {
+                println("onNewToken: $token") //Update user token in the server if needed
             }
 
+            override fun onPushNotification(title: String?, body: String?) {
+                super.onPushNotification(title, body)
+                println("onPushNotification: $title, $body")
+            }
+        })
+
+        // Remove the getToken() call as it's a suspend function
+        // and should be called from a coroutine
+
+        setContent {
+            val dao = getDatabaseBuilder(applicationContext).getDao()
+            //For Permission Handling
+            val viewModel = HomeViewModel(dao, PermissionsController(applicationContext))
+            viewModel.permissionsController.bind(this@MainActivity)
+            //For Logging
+            Napier.base(DebugAntilog())
+
+            val notificationScheduler = NotificationScheduler(applicationContext)
+            TaskReminderManager().scheduleTodayTasksNotifications(
+                dao, notificationScheduler
+            )
+
+            AppTheme {
+                App(dao, notificationScheduler, permissionsController = viewModel.permissionsController)
+            }
         }
     }
+    fun onRequestButtonClick(@Suppress("UNUSED_PARAMETER") view: View?) {
+        // Starts permission providing process.
+        viewModel.onPhotoPressed()
+    }
+
 }
 
 @Preview

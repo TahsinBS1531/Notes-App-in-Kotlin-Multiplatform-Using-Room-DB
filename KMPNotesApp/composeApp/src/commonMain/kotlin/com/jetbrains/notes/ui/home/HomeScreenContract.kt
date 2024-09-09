@@ -20,6 +20,8 @@ sealed class HomeEvent{
     data class SearchNotes(val query: String) : HomeEvent()
     data class onSelectedTime(val time: String) : HomeEvent()
 
+    object onAskMediaPermission : HomeEvent()
+
 }
 
 data class HomeState(

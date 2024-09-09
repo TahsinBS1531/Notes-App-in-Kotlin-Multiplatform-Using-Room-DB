@@ -1,22 +1,37 @@
 package com.jetbrains.notes.ui.home
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import com.jetbrains.notes.data.core.BaseViewState
 import com.jetbrains.notes.data.core.CoreViewModel
 import com.jetbrains.notes.data.model.local.Note
 import com.jetbrains.notes.data.model.local.NotesDao
 import com.jetbrains.notes.data.repository.LocalRepositoryImpl
+import dev.icerock.moko.permissions.DeniedAlwaysException
+import dev.icerock.moko.permissions.DeniedException
+import dev.icerock.moko.permissions.Permission
+import dev.icerock.moko.permissions.PermissionState
+import dev.icerock.moko.permissions.PermissionsController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 
-class HomeViewModel(dao: NotesDao) :
+class HomeViewModel(dao: NotesDao, val permissionsController: PermissionsController) :
     CoreViewModel<BaseViewState<HomeState>, HomeEvent>() {
+    var permissionState by mutableStateOf(PermissionState.NotDetermined)
 
     var data = HomeState()
 
     init {
         setState(BaseViewState.Data(data))
+        println("From the init block")
+        viewModelScope.launch {
+            permissionState = permissionsController.getPermissionState(Permission.COARSE_LOCATION)
+            println("From The Init Block $permissionState")
+
+        }
     }
 
     private val repository = LocalRepositoryImpl(dao)
@@ -42,16 +57,19 @@ class HomeViewModel(dao: NotesDao) :
                 data = data.copy(content = content)
                 setState(BaseViewState.Data(data))
             }
+
             is HomeEvent.UpdateDate -> {
                 val date = event.date
                 data = data.copy(date = date)
                 setState(BaseViewState.Data(data))
             }
+
             is HomeEvent.UpdateEmail -> {
                 val email = event.email
                 data = data.copy(email = email)
                 setState(BaseViewState.Data(data))
             }
+
             is HomeEvent.UpdateTitle -> {
                 println("Title from view model: $event.title")
                 val title = event.title
@@ -60,12 +78,13 @@ class HomeViewModel(dao: NotesDao) :
             }
 
             is HomeEvent.SearchNotes -> {
-                if(event.query.isNotEmpty() && event.query.length > 2){
+                if (event.query.isNotEmpty() && event.query.length > 2) {
                     searchNotes(event.query)
                 }
             }
 
             is HomeEvent.onSelectedTime -> showTaskOnSelectedDate(event.time)
+            is HomeEvent.onAskMediaPermission -> onPhotoPressed()
         }
 
     }
@@ -142,6 +161,24 @@ class HomeViewModel(dao: NotesDao) :
         }
     }
 
+    fun onPhotoPressed() {
+        viewModelScope.launch {
+            try {
+                permissionsController.providePermission(Permission.LOCATION)
+                permissionState = permissionsController.getPermissionState(Permission.COARSE_LOCATION)
+                println("Permission state while accepting it : $permissionState")
+                if (permissionState == PermissionState.Granted) {
+                    permissionState = PermissionState.Granted
+                }
+            } catch (deniedAlways: DeniedAlwaysException) {
+                permissionState = PermissionState.DeniedAlways
+                // Permission is always denied.
+            } catch (denied: DeniedException) {
+                permissionState = PermissionState.Denied
+                // Permission was denied.
+            }
+        }
+    }
 
 }
 

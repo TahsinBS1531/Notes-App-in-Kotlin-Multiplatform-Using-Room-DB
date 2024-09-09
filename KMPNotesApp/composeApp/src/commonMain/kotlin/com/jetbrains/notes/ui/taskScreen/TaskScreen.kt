@@ -46,7 +46,6 @@ fun TaskScreen(
     val uiState by homeViewModel.uiState.collectAsState()
 
 
-
 //    LaunchedEffect(taskViewModel) {
 //        viewModel.onTriggerEvent(HomeEvent.getAllNotes)
 //    }
@@ -95,9 +94,13 @@ fun TaskScreenContent(
 
     Scaffold(
         bottomBar = {
+//            AppBottomBar(
+//                items = listOf(BottomNavItem.Home, BottomNavItem.Task),
+//                navController = navController
+//            )
             BottomNavigation(
-                items = listOf(BottomNavItem.Home, BottomNavItem.Task),
-                navController = navController
+                items = listOf(BottomNavItem.Home, BottomNavItem.Task,BottomNavItem.Chart),
+                navController = navController,
             )
         }) { paddingValues ->
         LazyColumn(
@@ -169,7 +172,12 @@ fun TaskScreenContent(
         }
 
         if (isBottomSheetOpen) {
-            BottomSheet(closeBottomSheet = { isBottomSheetOpen = false }, onEvent, state, state.selectedTime)
+            BottomSheet(
+                closeBottomSheet = { isBottomSheetOpen = false },
+                onEvent,
+                state,
+                state.selectedTime
+            )
         }
     }
 

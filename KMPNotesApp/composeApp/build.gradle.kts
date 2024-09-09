@@ -7,9 +7,9 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
-
     alias(libs.plugins.kspCompose)
     alias(libs.plugins.room)
+    id("com.google.gms.google-services")
 }
 
 kotlin {
@@ -19,15 +19,16 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
     jvm("desktop")
-    
+
     listOf(
         iosX64(),
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
+//            export(project("io.github.mirzemehdi:kmpnotifier:1.2.1"))
             baseName = "ComposeApp"
             isStatic = true
         }
@@ -36,7 +37,7 @@ kotlin {
         kotlin.srcDir("build/generated/ksp/metadata")
     }
 
-    
+
     sourceSets {
         val desktopMain by getting
 
@@ -46,12 +47,15 @@ kotlin {
             implementation(libs.room.runtime.android)
             implementation(libs.koin.android)
             implementation(libs.koin.androidx.compose)
+            implementation(libs.animated.navigation.bar)
+
 
         }
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
+            implementation(compose.materialIconsExtended)
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
@@ -72,8 +76,31 @@ kotlin {
             implementation(libs.voyager.tab.navigator)
             implementation(libs.voyager.transitions)
 
+            implementation(libs.androidx.graphics.shapes)
+            //For Logging
+            implementation("io.github.aakira:napier:2.7.1")
 
+            //ARuntime Permission Handling
 
+            api("dev.icerock.moko:permissions:0.18.0")
+            //For Charting
+            implementation("io.github.thechance101:chart:Beta-0.0.5")
+
+            // compose multiplatform
+            api("dev.icerock.moko:permissions-compose:0.18.0") // permissions api + compose extensions
+
+            //File Picker
+            // Enables FileKit without Compose dependencies
+            implementation("io.github.vinceglb:filekit-core:0.8.2")
+
+            // Enables FileKit with Composable utilities
+            implementation("io.github.vinceglb:filekit-compose:0.8.2")
+
+            //Firebase
+            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:33.2.0"))
+
+            //For Push Notification
+            api("io.github.mirzemehdi:kmpnotifier:1.2.1")
 
         }
         desktopMain.dependencies {
@@ -89,8 +116,8 @@ kotlin {
     }
 }
 
-buildscript{
-    repositories{
+buildscript {
+    repositories {
         mavenCentral()
     }
 }
@@ -148,13 +175,14 @@ room {
 }
 
 dependencies {
-implementation(libs.androidx.core.i18n)
+    implementation(libs.androidx.core.i18n)
+    implementation(libs.firebase.messaging.ktx)
     //    implementation(libs.androidx.sqlite.bundled.android)
     add("kspCommonMainMetadata", libs.room.compiler)
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>>().configureEach {
-    if (name != "kspCommonMainKotlinMetadata" ) {
+    if (name != "kspCommonMainKotlinMetadata") {
         dependsOn("kspCommonMainKotlinMetadata")
     }
 }

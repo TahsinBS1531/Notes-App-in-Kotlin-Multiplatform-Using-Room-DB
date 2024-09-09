@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,6 +29,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -45,6 +47,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.jetbrains.notes.data.core.BaseViewState
 import com.jetbrains.notes.data.core.NotificationScheduler
@@ -55,6 +58,12 @@ import com.jetbrains.notes.ui.components.AppSectionTitle
 import com.jetbrains.notes.ui.components.EmptyView
 import com.jetbrains.notes.ui.components.ErrorView
 import com.jetbrains.notes.ui.components.LoadingView
+import dev.icerock.moko.permissions.Permission
+import dev.icerock.moko.permissions.PermissionState
+import dev.icerock.moko.permissions.PermissionsController
+import dev.icerock.moko.permissions.compose.BindEffect
+import dev.icerock.moko.permissions.compose.rememberPermissionsControllerFactory
+import io.github.aakira.napier.Napier
 import org.koin.core.annotation.KoinExperimentalAPI
 
 
@@ -63,18 +72,72 @@ import org.koin.core.annotation.KoinExperimentalAPI
 fun HomeScreen(
     modifier: Modifier = Modifier,
     dao: NotesDao,
-    viewModel: HomeViewModel,
     navController: NavController,
-    notificationScheduler: NotificationScheduler
+    notificationScheduler: NotificationScheduler,
+    permissionsController: PermissionsController
 ) {
+    val factory = rememberPermissionsControllerFactory()
+    val controller = remember(factory) {
+        factory.createPermissionsController()
+    }
+    BindEffect(controller)
+    val viewModel = viewModel {
+        HomeViewModel(dao, controller)
+    }
+
+//    BindEffect(permissionsController)
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(viewModel) {
+        viewModel.onTriggerEvent(HomeEvent.onAskMediaPermission)
         viewModel.onTriggerEvent(HomeEvent.getAllNotes)
+
     }
+    when (viewModel.permissionState) {
 
-    HomeScreenBody(modifier, uiState, dao, navController) { viewModel.onTriggerEvent(it) }
+        PermissionState.Granted -> {
+            println("Permission Granted")
+            Snackbar {
+                Text("Location Permission is granted")
+            }
+        }
 
+        PermissionState.DeniedAlways -> {
+            Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Permission was permanently denied")
+                Button(onClick = { controller.openAppSettings() }) {
+                    Text("Open App Settings")
+                }
+
+            }
+
+        }
+        PermissionState.Denied -> {
+            Button(onClick = { viewModel.onPhotoPressed() }) {
+                Text("Request Permission")
+            }
+        }
+
+        else -> {
+            Button(onClick = { viewModel.onTriggerEvent(HomeEvent.onAskMediaPermission) }) {
+                Text("Request Permission")
+            }
+        }
+    }
+    var isLocationPermissionGranted by remember { mutableStateOf(false) }
+    LaunchedEffect(controller) {
+        isLocationPermissionGranted = controller.isPermissionGranted(Permission.COARSE_LOCATION)
+    }
+    if (isLocationPermissionGranted) {
+        HomeScreenBody(
+            modifier,
+            uiState,
+            dao,
+            navController,
+            controller,
+            viewModel
+        ) { viewModel.onTriggerEvent(it) }
+    }
 }
 
 
@@ -84,6 +147,8 @@ fun HomeScreenBody(
     uiState: BaseViewState<*>,
     productDao: NotesDao,
     navController: NavController,
+    controller: PermissionsController,
+    viewModel: HomeViewModel,
     onEvent: (HomeEvent) -> Unit
 ) {
     when (uiState) {
@@ -91,7 +156,15 @@ fun HomeScreenBody(
             val homeState = uiState.value as? HomeState
 
             if (homeState != null) {
-                HomeScreenContent(modifier, homeState, onEvent, productDao, navController)
+                HomeScreenContent(
+                    modifier,
+                    homeState,
+                    onEvent,
+                    productDao,
+                    navController,
+                    viewModel,
+                    controller
+                )
             }
         }
 
@@ -108,7 +181,9 @@ fun HomeScreenContent(
     homeState: HomeState,
     onEvent: (HomeEvent) -> Unit,
     noteDao: NotesDao,
-    navController: NavController
+    navController: NavController,
+    viewModel: HomeViewModel,
+    controller: PermissionsController
 ) {
     val notesList by homeState.notes.collectAsState(initial = emptyList())
     var isBottomSheetOpen by remember {
@@ -122,9 +197,14 @@ fun HomeScreenContent(
             Icon(Icons.Default.Add, contentDescription = "Add Note")
         }
     }, bottomBar = {
+//        AppBottomBar(
+//            items = listOf(BottomNavItem.Home, BottomNavItem.Task),
+//            navController = navController,
+////            modifier = Modifier.padding(start = 10.dp, end = 10.dp)
+//        )
         BottomNavigation(
-            items = listOf(BottomNavItem.Home, BottomNavItem.Task),
-            navController = navController
+            items = listOf(BottomNavItem.Home, BottomNavItem.Task,BottomNavItem.Chart),
+            navController = navController,
         )
     }) { paddingValues ->
         Column(
@@ -132,7 +212,13 @@ fun HomeScreenContent(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
 
-            AppSectionTitle(modifier = Modifier.fillMaxWidth().padding(16.dp), text = "Keep Notes")
+            AppSectionTitle(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                text = "Keep Notes",
+                onEvent,
+                viewModel,
+                controller
+            )
             AppSearchBar(
                 modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp),
                 onEvent
@@ -168,6 +254,9 @@ fun HomeScreenContent(
 fun NoteCard(note: Note, onEvent: (HomeEvent) -> Unit, modifier: Modifier = Modifier) {
 
     println("Data on Note Card :$note")
+    Napier.d(message = "Note on the Card : ${note}", tag = "NoteCard")
+//    Napier.log(message = "Note on the Card : ${note}", tag = "NoteCard", priority = LogLevel.INFO)
+
     Card(
         modifier = modifier.width(150.dp).padding(4.dp).background(color = Color.White),
         elevation = CardDefaults.cardElevation(5.dp),
@@ -184,7 +273,7 @@ fun NoteCard(note: Note, onEvent: (HomeEvent) -> Unit, modifier: Modifier = Modi
             Text(
                 text = note.title,
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(end = 12.dp)
@@ -193,7 +282,7 @@ fun NoteCard(note: Note, onEvent: (HomeEvent) -> Unit, modifier: Modifier = Modi
             Text(
                 text = note.content,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(end = 12.dp)
@@ -209,13 +298,13 @@ fun NoteCard(note: Note, onEvent: (HomeEvent) -> Unit, modifier: Modifier = Modi
                         Icons.Default.Delete,
                         contentDescription = "Delete Note",
                         modifier = Modifier.align(Alignment.CenterStart),
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MaterialTheme.colorScheme.errorContainer
                     )
                 }
                 Box(
                     modifier = Modifier.height(15.dp).width(15.dp)
                         .shadow(shape = RoundedCornerShape(50), elevation = 5.dp)
-                        .background(color = MaterialTheme.colorScheme.primary)
+                        .background(color = MaterialTheme.colorScheme.errorContainer)
                         .align(Alignment.CenterEnd)
                 ) {
 
@@ -232,7 +321,7 @@ fun BottomSheet(
     closeBottomSheet: () -> Unit,
     onEvent: (HomeEvent) -> Unit,
     homeState: HomeState,
-    selectedTimeFromCalender: String =""
+    selectedTimeFromCalender: String = ""
 ) {
 
     var isDatePickerOpen by remember { mutableStateOf(false) }
@@ -244,11 +333,11 @@ fun BottomSheet(
     var selectedTime by remember { mutableStateOf("") }
     var isAddBtnEnabled by remember { mutableStateOf(false) }
 
-    if(title.isNotEmpty() && content.isNotEmpty() && selectedDate.isNotEmpty() && selectedTime.isNotEmpty()) {
+    if (title.isNotEmpty() && content.isNotEmpty() && selectedDate.isNotEmpty() && selectedTime.isNotEmpty()) {
         isAddBtnEnabled = true
     }
 
-    if(selectedTimeFromCalender.isNotEmpty()){
+    if (selectedTimeFromCalender.isNotEmpty()) {
         selectedDate = selectedTimeFromCalender
     }
 
@@ -292,7 +381,7 @@ fun BottomSheet(
                     )
                     println("Submit button is clicked")
                     closeBottomSheet()
-                }, modifier = Modifier.align(Alignment.CenterEnd),enabled = isAddBtnEnabled) {
+                }, modifier = Modifier.align(Alignment.CenterEnd), enabled = isAddBtnEnabled) {
                     Text(
                         "Add",
                         color = MaterialTheme.colorScheme.primary,
@@ -334,7 +423,7 @@ fun BottomSheet(
                 label = { Text(text = "Select Date") },
                 modifier = Modifier.padding(16.dp).fillMaxWidth(),
                 trailingIcon = {
-                    if(selectedTimeFromCalender.isEmpty()){
+                    if (selectedTimeFromCalender.isEmpty()) {
                         IconButton(onClick = { isDatePickerOpen = true }) {
                             Icon(
                                 Icons.Default.DateRange,
