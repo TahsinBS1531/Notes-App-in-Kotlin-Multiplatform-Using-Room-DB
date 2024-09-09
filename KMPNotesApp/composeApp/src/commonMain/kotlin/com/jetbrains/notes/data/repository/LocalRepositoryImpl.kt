@@ -1,6 +1,5 @@
 package com.jetbrains.notes.data.repository
 
-import com.jetbrains.notes.data.model.local.AppDatabase
 import com.jetbrains.notes.data.model.local.Note
 import com.jetbrains.notes.data.model.local.NotesDao
 import kotlinx.coroutines.flow.Flow
@@ -33,5 +32,27 @@ class LocalRepositoryImpl(private val local:NotesDao):BaseLocalRepository {
 
     override suspend fun getNotesByDateOfBirth(dateOfBirth: String): Flow<List<Note>> {
         return local.getNotesByDateOfBirth(dateOfBirth)
+    }
+
+    override suspend fun getLabelList(label: String): Flow<List<Note>> {
+        return local.getLabelList(label)
+    }
+
+    override suspend fun getTaskById(id: Long): Flow<Note?> {
+        return local.getTaskById(id)
+    }
+
+    override suspend fun updateTaskStatus(id: Long, status: String) {
+        local.updateTaskStatus(id, status)
+    }
+
+    override suspend fun updateSubTask(id: Long, subTask: List<String>) {
+        local.updateSubTask(id, subTask)
+    }
+    override suspend fun updateProgression(id: Long, progression: Float) {
+        local.updateProgression(id, progression)
+    }
+    override suspend fun updateCompletedSubtask(id: Long, subTask: List<String>) {
+        local.updateCompletedSubtask(id, subTask)
     }
 }

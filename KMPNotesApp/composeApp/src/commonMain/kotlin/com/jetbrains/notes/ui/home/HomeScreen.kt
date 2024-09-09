@@ -4,35 +4,54 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowColumn
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Divider
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.NewLabel
+import androidx.compose.material.icons.filled.PriorityHigh
+import androidx.compose.material.icons.filled.Task
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,6 +64,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -53,11 +73,13 @@ import com.jetbrains.notes.data.core.BaseViewState
 import com.jetbrains.notes.data.core.NotificationScheduler
 import com.jetbrains.notes.data.model.local.Note
 import com.jetbrains.notes.data.model.local.NotesDao
-import com.jetbrains.notes.ui.components.AppSearchBar
+import com.jetbrains.notes.ui.components.AppNewMiniCard
 import com.jetbrains.notes.ui.components.AppSectionTitle
 import com.jetbrains.notes.ui.components.EmptyView
 import com.jetbrains.notes.ui.components.ErrorView
+import com.jetbrains.notes.ui.components.FormWithTabRow
 import com.jetbrains.notes.ui.components.LoadingView
+import com.jetbrains.notes.ui.components.NoteListCard
 import dev.icerock.moko.permissions.Permission
 import dev.icerock.moko.permissions.PermissionState
 import dev.icerock.moko.permissions.PermissionsController
@@ -90,7 +112,8 @@ fun HomeScreen(
 
     LaunchedEffect(viewModel) {
         viewModel.onTriggerEvent(HomeEvent.onAskMediaPermission)
-        viewModel.onTriggerEvent(HomeEvent.getAllNotes)
+//        viewModel.onTriggerEvent(HomeEvent.getAllNotes)
+        viewModel.onTriggerEvent(HomeEvent.getLabelList("To Do"))
 
     }
     when (viewModel.permissionState) {
@@ -103,7 +126,10 @@ fun HomeScreen(
         }
 
         PermissionState.DeniedAlways -> {
-            Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text("Permission was permanently denied")
                 Button(onClick = { controller.openAppSettings() }) {
                     Text("Open App Settings")
@@ -112,6 +138,7 @@ fun HomeScreen(
             }
 
         }
+
         PermissionState.Denied -> {
             Button(onClick = { viewModel.onPhotoPressed() }) {
                 Text("Request Permission")
@@ -130,12 +157,7 @@ fun HomeScreen(
     }
     if (isLocationPermissionGranted) {
         HomeScreenBody(
-            modifier,
-            uiState,
-            dao,
-            navController,
-            controller,
-            viewModel
+            modifier, uiState, dao, navController, controller, viewModel
         ) { viewModel.onTriggerEvent(it) }
     }
 }
@@ -157,13 +179,7 @@ fun HomeScreenBody(
 
             if (homeState != null) {
                 HomeScreenContent(
-                    modifier,
-                    homeState,
-                    onEvent,
-                    productDao,
-                    navController,
-                    viewModel,
-                    controller
+                    modifier.fillMaxSize().padding(16.dp), homeState, onEvent, productDao, navController, viewModel, controller
                 )
             }
         }
@@ -177,7 +193,7 @@ fun HomeScreenBody(
 
 @Composable
 fun HomeScreenContent(
-    modifier: Modifier,
+    modifier: Modifier=Modifier,
     homeState: HomeState,
     onEvent: (HomeEvent) -> Unit,
     noteDao: NotesDao,
@@ -203,39 +219,37 @@ fun HomeScreenContent(
 ////            modifier = Modifier.padding(start = 10.dp, end = 10.dp)
 //        )
         BottomNavigation(
-            items = listOf(BottomNavItem.Home, BottomNavItem.Task,BottomNavItem.Chart),
+            items = listOf(BottomNavItem.Home, BottomNavItem.Task, BottomNavItem.Chart),
             navController = navController,
         )
     }) { paddingValues ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(paddingValues),
+            modifier = modifier.fillMaxSize().padding(paddingValues),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
 
             AppSectionTitle(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                modifier = Modifier.fillMaxWidth(),
                 text = "Keep Notes",
                 onEvent,
                 viewModel,
                 controller
             )
-            AppSearchBar(
-                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp),
+            AppNewMiniCard(modifier = Modifier.fillMaxWidth())
+//            AppSearchBar(
+//                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp), onEvent
+//            )
+
+            FormWithTabRow(
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                titles = listOf("To Do", "In Progress", "Completed"),
+                tabContents = listOf({ NoteLabelList(notesList, onEvent,navController) },
+                    { NoteLabelList(notesList, onEvent, navController) },
+                    { NoteLabelList(notesList, onEvent, navController) },
+                    { NoteLabelList(notesList, onEvent, navController) }),
                 onEvent
             )
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-//                contentPadding = PaddingValues(6.dp),
-                modifier = Modifier.fillMaxWidth().padding(16.dp)
-            ) {
-                items(notesList) {
-                    NoteCard(it, onEvent)
-                }
-
-            }
         }
 
         if (isBottomSheetOpen) {
@@ -247,6 +261,20 @@ fun HomeScreenContent(
         }
     }
 
+}
+
+@Composable
+fun NoteLabelList(notes: List<Note>, onEvent: (HomeEvent) -> Unit, navController: NavController) {
+
+    LazyColumn(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        items(notes) {
+            NoteListCard(it,navController)
+        }
+    }
 }
 
 
@@ -315,7 +343,9 @@ fun NoteCard(note: Note, onEvent: (HomeEvent) -> Unit, modifier: Modifier = Modi
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(
+    ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalMaterialApi::class
+)
 @Composable
 fun BottomSheet(
     closeBottomSheet: () -> Unit,
@@ -332,6 +362,17 @@ fun BottomSheet(
     var email by remember { mutableStateOf("") }
     var selectedTime by remember { mutableStateOf("") }
     var isAddBtnEnabled by remember { mutableStateOf(false) }
+
+    var assigneeEmail by remember { mutableStateOf("") }
+    var assignees by remember { mutableStateOf(mutableListOf<String>()) }
+
+    var subtaskTitle by remember { mutableStateOf("") }
+    var subtaskDescription by remember { mutableStateOf("") }
+    var subtasks by remember { mutableStateOf(mutableListOf<String>()) }
+    var selectedPriority by remember { mutableStateOf("") }
+    var selectedLabels by remember { mutableStateOf(arrayListOf<String>()) }
+    var selectedStatus by remember { mutableStateOf("") }
+
 
     if (title.isNotEmpty() && content.isNotEmpty() && selectedDate.isNotEmpty() && selectedTime.isNotEmpty()) {
         isAddBtnEnabled = true
@@ -375,7 +416,12 @@ fun BottomSheet(
                                 content = content,
                                 email = email,
                                 dateOfBirth = selectedDate,
-                                selectedTime = selectedTime
+                                selectedTime = selectedTime,
+                                priority = selectedPriority,
+                                assignees = assignees,
+                                subtasks = subtasks,
+                                labels = selectedLabels,
+                                status = selectedStatus
                             )
                         )
                     )
@@ -390,67 +436,231 @@ fun BottomSheet(
                 }
 
             }
-            TextField(
-                value = title,
-                onValueChange = {
-                    title = it
-                },
-                label = { Text(text = "Title") },
-                modifier = Modifier.padding(16.dp).fillMaxWidth()
+            OutlinedTextField(value = title, onValueChange = {
+                title = it
+            }, label = { Text(text = "Title") }, modifier = Modifier.fillMaxWidth()
             )
 
-            TextField(
-                value = content,
-                onValueChange = {
-                    content = it
-                },
-                label = { Text(text = "Description") },
-                modifier = Modifier.padding(16.dp).fillMaxWidth()
+            OutlinedTextField(value = content, onValueChange = {
+                content = it
+            }, label = { Text(text = "Description") }, modifier = Modifier.fillMaxWidth()
             )
 
-            TextField(
+            OutlinedTextField(
                 value = email,
                 onValueChange = {
                     email = it
                 },
                 label = { Text(text = "Email") },
-                modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 isError = homeState.isEmailValid
             )
-            TextField(
-                value = selectedDate,
-                onValueChange = { selectedDate = it },
-                label = { Text(text = "Select Date") },
-                modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                trailingIcon = {
-                    if (selectedTimeFromCalender.isEmpty()) {
-                        IconButton(onClick = { isDatePickerOpen = true }) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = selectedDate,
+                    onValueChange = { selectedDate = it },
+                    label = { Text(text = "Due Date") },
+                    modifier = Modifier.weight(1f),
+                    trailingIcon = {
+                        if (selectedTimeFromCalender.isEmpty()) {
+                            IconButton(onClick = { isDatePickerOpen = true }) {
+                                Icon(
+                                    Icons.Default.DateRange,
+                                    contentDescription = "Open Date Picker",
+                                    tint = MaterialTheme.colorScheme.secondaryContainer
+                                )
+                            }
+                        }
+                    },
+                    readOnly = true
+                )
+
+                OutlinedTextField(
+                    value = selectedTime,
+                    onValueChange = { selectedTime = it },
+                    label = { Text(text = "Due Time") },
+                    modifier = Modifier.weight(1f),
+                    trailingIcon = {
+                        IconButton(onClick = { isTimePickerOpen = true }) {
                             Icon(
-                                Icons.Default.DateRange,
+                                Icons.Default.Timer,
                                 contentDescription = "Open Date Picker",
-                                tint = MaterialTheme.colorScheme.primary
+                                tint = MaterialTheme.colorScheme.secondaryContainer
                             )
                         }
+                    },
+                    readOnly = true
+                )
+            }
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.PriorityHigh,
+                        null,
+                        tint = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                    Text("Priority")
+                }
+                AppFilterChip(
+                    labels = listOf("Urgent", "Important", "Low", "Delegated", "Pending"),
+                    onItemClick = {
+                        selectedPriority = it
+                    })
+                Divider()
+            }
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.NewLabel,
+                        null,
+                        tint = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                    Text("Labels")
+                }
+                AppFilterChip(
+                    labels = listOf(
+                        "Mobile", "Website", "Wireframe"
+                    ), onItemClick = {
+                        selectedLabels.add(it)
+                    }, multiselected = true
+                )
+                Divider()
+
+            }
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Task,
+                        null,
+                        tint = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                    Text("Status")
+                }
+                AppFilterChip(labels = listOf("To Do", "In Progress", "Completed"), onItemClick = {
+                    selectedStatus = it
+                })
+                Divider()
+
+            }
+
+            OutlinedTextField(
+                value = assigneeEmail,
+                onValueChange = { assigneeEmail = it },
+                label = { Text(text = "Assignee Email") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = {
+                    if (assigneeEmail.isNotEmpty()) {
+                        assignees.add(assigneeEmail)
+                        assigneeEmail = ""
                     }
-                },
-                readOnly = true
+                })
+
             )
-            TextField(
-                value = selectedTime,
-                onValueChange = { selectedTime = it },
-                label = { Text(text = "Select Time") },
-                modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                trailingIcon = {
-                    IconButton(onClick = { isTimePickerOpen = true }) {
-                        Icon(
-                            Icons.Default.DateRange,
-                            contentDescription = "Open Date Picker",
-                            tint = MaterialTheme.colorScheme.primary
+            FlowRow(
+                modifier = Modifier.padding(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                assignees.forEach { email ->
+                    FilterChip(modifier = Modifier.padding(4.dp),
+                        label = { Text(email) },
+                        selected = true,
+                        onClick = {},
+                        trailingIcon = {
+                            IconButton(onClick = { assignees.remove(email) }) {
+                                Icon(Icons.Default.Close, null)
+                            }
+                        })
+                }
+            }
+
+            // Subtask input fields
+            Column(
+                verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Subtasks", style = MaterialTheme.typography.titleMedium)
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = subtaskTitle,
+                        onValueChange = { subtaskTitle = it },
+                        label = { Text(text = "Subtask Title") },
+                        modifier = Modifier.weight(1f),
+                    )
+                    OutlinedTextField(
+                        value = subtaskDescription,
+                        onValueChange = { subtaskDescription = it },
+                        label = { Text(text = "Estimated Time") },
+                        modifier = Modifier.weight(1f)
+                    )
+                    Button(
+                        onClick = {
+                            if (subtaskTitle.isNotEmpty() && subtaskDescription.isNotEmpty()) {
+                                subtasks.add("$subtaskTitle - $subtaskDescription")
+                                subtaskTitle = ""
+                                subtaskDescription = ""
+                            }
+                        }, colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                         )
+                    ) {
+                        Text("Add")
                     }
-                },
-                readOnly = true
-            )
+                }
+            }
+
+            FlowColumn(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                subtasks.forEach { task ->
+                    InputChip(modifier = Modifier.padding(4.dp).fillMaxWidth()
+                        .align(Alignment.CenterHorizontally),
+                        label = { Text(task) },
+                        selected = true,
+                        onClick = {},
+                        trailingIcon = {
+                            IconButton(onClick = {
+                                subtasks.remove(task)
+                            }) {
+                                Icon(Icons.Default.Close, null)
+                            }
+                        })
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+
 
             if (isDatePickerOpen) {
                 showDatePicker(onDateSelected = {
@@ -466,6 +676,55 @@ fun BottomSheet(
     }
 
 }
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun AppFilterChip(
+    labels: List<String>,
+    onItemClick: (String) -> Unit,
+    multiselected: Boolean = false
+) {
+    var selectedStates by remember { mutableStateOf(List(labels.size) { false }) }
+
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        for (i in labels.indices) {
+            val isSelected = selectedStates[i]
+
+            FilterChip(
+                onClick = {
+                    selectedStates = selectedStates.toMutableList().also {
+                        if (multiselected) {
+                            it[i] = !it[i]
+                        } else {
+                            it.fill(false)
+                            it[i] = true
+                        }
+                    }
+                    onItemClick(labels[i])
+                },
+                label = {
+                    Text(labels[i])
+                },
+                selected = isSelected,
+                leadingIcon = if (isSelected) {
+                    {
+                        Icon(
+                            imageVector = Icons.Filled.Done,
+                            contentDescription = "Done icon",
+                            modifier = Modifier.size(FilterChipDefaults.IconSize)
+                        )
+                    }
+                } else {
+                    null
+                },
+            )
+        }
+    }
+}
+
 
 @Composable
 expect fun showDatePicker(

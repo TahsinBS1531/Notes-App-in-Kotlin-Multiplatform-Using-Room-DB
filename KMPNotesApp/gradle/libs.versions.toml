@@ -34,6 +34,7 @@ voyagerVersion = "1.1.0-beta02"
 
 logging = "1.3"
 firebaseMessagingKtx = "24.0.1"
+generativeai = "0.9.0"
 
 
 [libraries]
@@ -77,6 +78,7 @@ androidx-core-i18n = { group = "androidx.core", name = "core-i18n", version.ref 
 
 logging = { module = "org.lighthousegames:logging", version.ref = "logging" }
 firebase-messaging-ktx = { group = "com.google.firebase", name = "firebase-messaging-ktx", version.ref = "firebaseMessagingKtx" }
+generativeai = { group = "com.google.ai.client.generativeai", name = "generativeai", version.ref = "generativeai" }
 
 
 

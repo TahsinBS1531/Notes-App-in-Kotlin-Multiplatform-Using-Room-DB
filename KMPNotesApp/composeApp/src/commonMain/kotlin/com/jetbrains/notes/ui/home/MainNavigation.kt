@@ -25,6 +25,7 @@ import androidx.navigation.compose.rememberNavController
 import com.jetbrains.notes.data.core.NotificationScheduler
 import com.jetbrains.notes.data.model.local.NotesDao
 import com.jetbrains.notes.ui.taskScreen.TaskScreen
+import com.jetbrains.notes.ui.taskdetails.TaskDetails
 import dev.icerock.moko.permissions.PermissionsController
 
 @Composable
@@ -62,24 +63,16 @@ fun MainNavigation(dao: NotesDao, notificationScheduler: NotificationScheduler, 
         composable(BottomNavItem.Task.route) {
             TaskScreen(navController, dao, HomeViewModel(dao, permissionsController = permissionsController))
         }
+        composable(BottomNavItem.TaskDetails.route) {
+            val taskId = it.arguments?.getString("id") ?: ""
+            TaskDetails(modifier = Modifier, dao = dao, navController = navController,taskId)
+        }
         composable(BottomNavItem.Chart.route) {
             ChartScreen(
                 navController,
                 HomeViewModel(dao, permissionsController = permissionsController)
             )
         }
-//        composable(BottomNavItem.Profile.route) {
-//            ProfileScreen(dao)
-//        }
-//        composable(
-//            route = "${BottomNavItem.ProductDetails.route}/{productId}",
-//            arguments = listOf(navArgument("productId") { type = NavType.StringType })
-//        ) { backStackEntry ->
-//            val productId = backStackEntry.arguments?.getString("productId")
-//            if (productId != null) {
-//                ProductDetailsScreen(productId, navController,dao)
-//            }
-//        }
     }
 }
 
@@ -89,6 +82,7 @@ sealed class BottomNavItem(val route: String, val icon: ImageVector, val title: 
     object Profile : BottomNavItem("profile", Icons.Default.Person, "Profile")
     object ProductDetails : BottomNavItem("productDetails", Icons.Default.Person, "Product Details")
     object Task : BottomNavItem("task", Icons.Default.Create, "Task")
+    object TaskDetails : BottomNavItem("taskDetail/{id}", Icons.Default.Create, "Task Details")
     object Chart : BottomNavItem("chart", Icons.Default.BarChart, "Chart")
 }
 

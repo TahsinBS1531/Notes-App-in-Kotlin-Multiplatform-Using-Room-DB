@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.kspCompose)
     alias(libs.plugins.room)
     id("com.google.gms.google-services")
+    kotlin("plugin.serialization") version "2.0.20"
 }
 
 kotlin {
@@ -62,6 +63,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.room.runtime)
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.2")
             implementation("androidx.sqlite:sqlite-bundled:2.5.0-SNAPSHOT") //for sqlite drivers related
 //            implementation(libs.androidx.sqlite.bundled.android)
             implementation(libs.kotlinx.datetime)
@@ -101,6 +103,11 @@ kotlin {
 
             //For Push Notification
             api("io.github.mirzemehdi:kmpnotifier:1.2.1")
+            //Gemini App
+//            implementation ("com.google.cloud:gapic-google-ai:1.0.0")
+            implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
+
+
 
         }
         desktopMain.dependencies {
@@ -177,6 +184,7 @@ room {
 dependencies {
     implementation(libs.androidx.core.i18n)
     implementation(libs.firebase.messaging.ktx)
+    implementation(libs.generativeai)
     //    implementation(libs.androidx.sqlite.bundled.android)
     add("kspCommonMainMetadata", libs.room.compiler)
 }
@@ -185,4 +193,10 @@ tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>>().configureEach
     if (name != "kspCommonMainKotlinMetadata") {
         dependsOn("kspCommonMainKotlinMetadata")
     }
+}
+
+compose.resources {
+    publicResClass = false
+    packageOfResClass = "me.sample.library.resources"
+    generateResClass = auto
 }

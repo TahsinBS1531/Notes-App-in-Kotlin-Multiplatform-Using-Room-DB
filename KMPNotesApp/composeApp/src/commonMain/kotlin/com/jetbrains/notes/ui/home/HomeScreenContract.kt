@@ -21,11 +21,18 @@ sealed class HomeEvent{
     data class onSelectedTime(val time: String) : HomeEvent()
 
     object onAskMediaPermission : HomeEvent()
+    data class getLabelList(val label: String) : HomeEvent()
+    data class getTaskById(val id: Long) : HomeEvent()
+    data class updateTaskStatus(val id: Long, val status: String) : HomeEvent()
+    data class updateSubTask(val id: Long, val subTask: List<String>) : HomeEvent()
+    data class updateProgression(val id: Long, val progression: Float) : HomeEvent()
+    data class updateCompletedSubtask(val id: Long, val subTask: List<String>) : HomeEvent()
 
 }
 
 data class HomeState(
     val notes: Flow<List<Note>> = emptyFlow(),
+    val note: Flow<Note?> = emptyFlow(),
     val isEmailValid: Boolean = false,
     val title:String ="",
     val content: String ="",

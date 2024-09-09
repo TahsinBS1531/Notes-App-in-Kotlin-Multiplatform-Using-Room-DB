@@ -8,12 +8,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Chip
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowCircleDown
 import androidx.compose.material.icons.filled.ArrowCircleUp
@@ -30,6 +36,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -42,7 +49,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -378,3 +388,195 @@ fun AddProjectScreenPreview() {
         AddProjectScreen()
     }
 }
+
+@Composable
+fun AppNewMiniCard() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxHeight()
+                .weight(1f),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .padding(16.dp)
+            ) {
+                Image(
+                    painter = androidx.compose.ui.res.painterResource(id = R.drawable.mobilelogo),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .size(70.dp),
+                    contentScale = ContentScale.Crop
+                )
+                Column(
+                    modifier = Modifier.align(Alignment.BottomStart),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text(text = "Mobile", style = MaterialTheme.typography.titleLarge)
+                    Text(text = "6 Tasks", style = MaterialTheme.typography.bodyMedium)
+
+                }
+            }
+        }
+        Column(
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .weight(1.5f)
+                .fillMaxHeight()
+        ) {
+            AppNewMiniCard2(
+                modifier = Modifier
+                    .fillMaxWidth()
+//                    .padding(16.dp)
+                    .weight(1f),
+                title = "Wireframe",
+                tasks = "10",
+                R.drawable.bulbimage
+            )
+            AppNewMiniCard2(
+                modifier = Modifier
+                    .fillMaxWidth()
+//                    .padding(16.dp)
+                    .weight(1f),
+                title = "Website",
+                tasks = "8",
+                painterResources = R.drawable.website
+            )
+
+        }
+    }
+
+}
+
+@Composable
+fun AppNewMiniCard2(
+    modifier: Modifier = Modifier, title: String, tasks: String,
+    painterResources: Int
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight()
+        ) {
+            Image(
+                painter = painterResource(id = painterResources),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(60.dp)
+                    .weight(1f),
+                contentScale = ContentScale.Crop
+            )
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.weight(1.5f)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Text(
+                    text = "$tasks Tasks",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+        }
+
+
+    }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun AppNewMiniCardPreview() {
+    AppTheme {
+        AppNewMiniCard()
+    }
+}
+
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun NoteListCard() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Chip(onClick = {}, modifier = Modifier.align(Alignment.CenterStart)) {
+                    Text("Urgent")
+                }
+                Chip(onClick = {}, modifier = Modifier.align(Alignment.CenterEnd)) {
+                    Text("Mobile")
+                }
+            }
+            Text(
+                "Make Changes to my Chat Project",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.fillMaxWidth(0.6f),
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
+            )
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    "Due : 25 Oct",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.align(
+                        Alignment.CenterStart
+                    )
+                )
+                Column(modifier = Modifier.align(Alignment.CenterEnd)) {
+                    Text("45%", style = MaterialTheme.typography.bodyMedium)
+                    LinearProgressIndicator(
+                        progress = { 0.45f },
+                        modifier = Modifier.width(100.dp),
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        trackColor = MaterialTheme.colorScheme.surfaceDim,
+                    )
+
+                }
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun NoteListCardPreview() {
+    AppTheme {
+        NoteListCard()
+    }
+}
+
+

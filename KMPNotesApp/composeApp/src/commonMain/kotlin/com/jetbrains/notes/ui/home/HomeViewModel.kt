@@ -85,8 +85,94 @@ class HomeViewModel(dao: NotesDao, val permissionsController: PermissionsControl
 
             is HomeEvent.onSelectedTime -> showTaskOnSelectedDate(event.time)
             is HomeEvent.onAskMediaPermission -> onPhotoPressed()
+            is HomeEvent.getLabelList -> {
+                getLabelList(event.label)
+            }
+
+            is HomeEvent.getTaskById ->{
+                getTaskById(event.id)
+            }
+
+            is HomeEvent.updateTaskStatus -> {
+                updateTaskStatus(event.id, event.status)
+            }
+
+            is HomeEvent.updateProgression -> {
+                updateProgression(event.id, event.progression)
+            }
+            is HomeEvent.updateSubTask -> {
+                updateSubTask(event.id, event.subTask)
+            }
+
+            is HomeEvent.updateCompletedSubtask -> {
+                updateCompletedSubtask(event.id, event.subTask)
+            }
         }
 
+    }
+
+    private fun updateCompletedSubtask(id: Long, subTask: List<String>) {
+        viewModelScope.launch {
+            try {
+                repository.updateCompletedSubtask(id, subTask)
+            } catch (e: Exception) {
+                handleError(e)
+            }
+        }
+    }
+
+    private fun updateSubTask(id: Long, subTask: List<String>) {
+        viewModelScope.launch {
+            try {
+                repository.updateSubTask(id, subTask)
+            } catch (e: Exception) {
+                handleError(e)
+            }
+        }
+    }
+
+    private fun updateProgression(id: Long, progression: Float) {
+        viewModelScope.launch {
+            try {
+                repository.updateProgression(id, progression)
+            } catch (e: Exception) {
+                handleError(e)
+            }
+        }
+    }
+
+    private fun updateTaskStatus(id: Long, status: String) {
+        viewModelScope.launch {
+            try {
+                repository.updateTaskStatus(id, status)
+            } catch (e: Exception) {
+                handleError(e)
+            }
+        }
+    }
+
+    private fun getTaskById(id: Long) {
+        viewModelScope.launch {
+            try {
+                val note = repository.getTaskById(id)
+                data = data.copy(note = note)
+                setState(BaseViewState.Data(data))
+            } catch (e: Exception) {
+                handleError(e)
+            }
+        }
+    }
+
+    private fun getLabelList(label: String) {
+        viewModelScope.launch {
+            try {
+                val notes = repository.getLabelList(label)
+                data = data.copy(notes = notes)
+                setState(BaseViewState.Data(data))
+            } catch (e: Exception) {
+                handleError(e)
+            }
+        }
     }
 
     private fun showTaskOnSelectedDate(time: String) {
