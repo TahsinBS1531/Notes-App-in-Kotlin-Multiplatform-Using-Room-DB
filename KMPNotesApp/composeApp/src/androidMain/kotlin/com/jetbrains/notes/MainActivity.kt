@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.example.compose.AppTheme
 import com.jetbrains.notes.data.core.NotificationScheduler
 import com.jetbrains.notes.data.core.TaskReminderManager
+import com.jetbrains.notes.ui.auth.AuthServiceImpl
 import com.jetbrains.notes.ui.components.AppSearchBar
 import com.jetbrains.notes.ui.components.TaskCard
 import com.jetbrains.notes.ui.home.HomeViewModel
@@ -22,10 +23,13 @@ import com.jetbrains.notes.ui.home.taskDatePicker
 import com.mmk.kmpnotifier.notification.NotifierManager
 import com.mmk.kmpnotifier.notification.configuration.NotificationPlatformConfiguration
 import com.mmk.kmpnotifier.permission.permissionUtil
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.auth.auth
 import dev.icerock.moko.permissions.PermissionsController
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.core.FileKit
+import org.koin.compose.KoinContext
 
 class MainActivity : ComponentActivity() {
     private lateinit var viewModel: HomeViewModel
@@ -64,7 +68,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             val dao = getDatabaseBuilder(applicationContext).getDao()
             //For Permission Handling
-            val viewModel = HomeViewModel(dao, PermissionsController(applicationContext))
+
+            val viewModel = HomeViewModel(
+                dao,
+                PermissionsController(applicationContext),
+                authService = AuthServiceImpl(Firebase.auth)
+            )
             viewModel.permissionsController.bind(this@MainActivity)
             //For Logging
             Napier.base(DebugAntilog())
@@ -73,12 +82,18 @@ class MainActivity : ComponentActivity() {
             TaskReminderManager().scheduleTodayTasksNotifications(
                 dao, notificationScheduler
             )
-
             AppTheme {
-                App(dao, notificationScheduler, permissionsController = viewModel.permissionsController)
+                KoinContext {
+                    App(
+                        dao,
+                        notificationScheduler,
+                        permissionsController = viewModel.permissionsController
+                    )
+                }
             }
         }
     }
+
     fun onRequestButtonClick(@Suppress("UNUSED_PARAMETER") view: View?) {
         // Starts permission providing process.
         viewModel.onPhotoPressed()
@@ -94,7 +109,7 @@ fun AppAndroidPreview() {
 
 @Preview
 @Composable
-fun AppSearchBarPrev(){
+fun AppSearchBarPrev() {
     AppSearchBar(modifier = Modifier.fillMaxWidth(), onEvent = {})
 
 }
@@ -102,16 +117,18 @@ fun AppSearchBarPrev(){
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview(showBackground = true, heightDp = 600, widthDp = 350)
 @Composable
-fun datePreev(){
+fun datePreev() {
     taskDatePicker(onDateSelected = {}, onDismiss = {}, modifier = Modifier.fillMaxWidth())
 }
 
 @Preview(showBackground = true)
 @Composable
-fun prevTaskCard(){
-    TaskCard(modifier = Modifier
-        .fillMaxWidth()
-        .padding(16.dp), title = "Task Title",
+fun prevTaskCard() {
+    TaskCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp), title = "Task Title",
         date = "2023-09-12",
-        time = "10:00 AM")
+        time = "10:00 AM"
+    )
 }

@@ -60,9 +60,6 @@ interface NotesDao {
     @Query("SELECT * FROM notes WHERE id = :id")
     fun getTaskById(id: Long): Flow<Note?>
 
-
-
-
 }
 
 @Entity(tableName = "notes")

@@ -46,15 +46,16 @@ fun TaskDetails(
     dao: NotesDao,
     navController: NavController,
     taskId: String,
+    viewModel: HomeViewModel = viewModel()
 ) {
     val factory = rememberPermissionsControllerFactory()
     val controller = remember(factory) {
         factory.createPermissionsController()
     }
     BindEffect(controller)
-    val viewModel = viewModel {
-        HomeViewModel(dao, controller)
-    }
+//    val viewModel = viewModel {
+//        HomeViewModel(dao, controller)
+//    }
 
     val uiState by viewModel.uiState.collectAsState()
 

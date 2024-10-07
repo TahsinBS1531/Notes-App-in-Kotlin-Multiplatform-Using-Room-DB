@@ -70,7 +70,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.jetbrains.notes.data.core.BaseViewState
-import com.jetbrains.notes.data.core.NotificationScheduler
 import com.jetbrains.notes.data.model.local.Note
 import com.jetbrains.notes.data.model.local.NotesDao
 import com.jetbrains.notes.ui.components.AppNewMiniCard
@@ -86,6 +85,7 @@ import dev.icerock.moko.permissions.PermissionsController
 import dev.icerock.moko.permissions.compose.BindEffect
 import dev.icerock.moko.permissions.compose.rememberPermissionsControllerFactory
 import io.github.aakira.napier.Napier
+import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.annotation.KoinExperimentalAPI
 
 
@@ -95,17 +95,16 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     dao: NotesDao,
     navController: NavController,
-    notificationScheduler: NotificationScheduler,
-    permissionsController: PermissionsController
+    onNavigate:(BottomNavItem)-> Unit,
+    viewModel2: HomeViewModel = viewModel(),
 ) {
     val factory = rememberPermissionsControllerFactory()
     val controller = remember(factory) {
         factory.createPermissionsController()
     }
     BindEffect(controller)
-    val viewModel = viewModel {
-        HomeViewModel(dao, controller)
-    }
+
+    val viewModel = koinViewModel<HomeViewModel>()
 
 //    BindEffect(permissionsController)
     val uiState by viewModel.uiState.collectAsState()
@@ -157,7 +156,7 @@ fun HomeScreen(
     }
     if (isLocationPermissionGranted) {
         HomeScreenBody(
-            modifier, uiState, dao, navController, controller, viewModel
+            modifier, uiState, dao, navController, controller, viewModel,onNavigate
         ) { viewModel.onTriggerEvent(it) }
     }
 }
@@ -171,6 +170,7 @@ fun HomeScreenBody(
     navController: NavController,
     controller: PermissionsController,
     viewModel: HomeViewModel,
+    onNavigate: (BottomNavItem) -> Unit,
     onEvent: (HomeEvent) -> Unit
 ) {
     when (uiState) {
@@ -179,7 +179,7 @@ fun HomeScreenBody(
 
             if (homeState != null) {
                 HomeScreenContent(
-                    modifier.fillMaxSize().padding(16.dp), homeState, onEvent, productDao, navController, viewModel, controller
+                    modifier.fillMaxSize().padding(16.dp), homeState, onEvent, productDao, navController, viewModel, controller,onNavigate
                 )
             }
         }
@@ -199,7 +199,8 @@ fun HomeScreenContent(
     noteDao: NotesDao,
     navController: NavController,
     viewModel: HomeViewModel,
-    controller: PermissionsController
+    controller: PermissionsController,
+    onNavigate: (BottomNavItem) -> Unit
 ) {
     val notesList by homeState.notes.collectAsState(initial = emptyList())
     var isBottomSheetOpen by remember {
@@ -230,8 +231,9 @@ fun HomeScreenContent(
 
             AppSectionTitle(
                 modifier = Modifier.fillMaxWidth(),
-                text = "Keep Notes",
+                text = "Keep Tasks",
                 onEvent,
+                onNavigate = onNavigate,
                 viewModel,
                 controller
             )

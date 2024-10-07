@@ -24,14 +24,19 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.jetbrains.notes.data.core.NotificationScheduler
 import com.jetbrains.notes.data.model.local.NotesDao
+import com.jetbrains.notes.ui.auth.AuthServiceImpl
+import com.jetbrains.notes.ui.auth.LoginScreen1
+import com.jetbrains.notes.ui.auth.SignUp
 import com.jetbrains.notes.ui.taskScreen.TaskScreen
 import com.jetbrains.notes.ui.taskdetails.TaskDetails
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.auth.auth
 import dev.icerock.moko.permissions.PermissionsController
 
 @Composable
 fun MainNavigation(dao: NotesDao, notificationScheduler: NotificationScheduler, permissionsController: PermissionsController) {
     val navController = rememberNavController()
-    val startDestination = BottomNavItem.Home.route
+    val startDestination = BottomNavItem.Login.route
 
     NavHost(navController = navController, startDestination = startDestination, enterTransition = {
         slideIntoContainer(
@@ -50,33 +55,46 @@ fun MainNavigation(dao: NotesDao, notificationScheduler: NotificationScheduler, 
             AnimatedContentTransitionScope.SlideDirection.Right, animationSpec = tween(500)
         )
     }) {
+        val homeViewModel = HomeViewModel(dao, permissionsController,AuthServiceImpl(Firebase.auth))
+        composable(BottomNavItem.Login.route) {
+            LoginScreen1(onLoginSuccess = {},navController)
+        }
+        composable(BottomNavItem.Signup.route) {
+            SignUp(onLoginSuccess = {},navController)
+        }
+
         composable(BottomNavItem.Home.route) {
             HomeScreen(
                 navController = navController,
                 modifier = Modifier,
                 dao = dao,
 //                viewModel = HomeViewModel(dao, permissionsController = permissionsController),
-                notificationScheduler = notificationScheduler,
-                permissionsController = permissionsController
+                viewModel2 = homeViewModel,
+                onNavigate = {
+                    navController.navigate(it.route)
+                }
+
             )
         }
         composable(BottomNavItem.Task.route) {
-            TaskScreen(navController, dao, HomeViewModel(dao, permissionsController = permissionsController))
+            TaskScreen(navController, dao, homeViewModel)
         }
         composable(BottomNavItem.TaskDetails.route) {
             val taskId = it.arguments?.getString("id") ?: ""
-            TaskDetails(modifier = Modifier, dao = dao, navController = navController,taskId)
+            TaskDetails(modifier = Modifier, dao = dao, navController = navController,taskId, viewModel = homeViewModel)
         }
         composable(BottomNavItem.Chart.route) {
             ChartScreen(
                 navController,
-                HomeViewModel(dao, permissionsController = permissionsController)
+                homeViewModel
             )
         }
     }
 }
 
 sealed class BottomNavItem(val route: String, val icon: ImageVector, val title: String) {
+    object Login : BottomNavItem("login", Icons.Default.Person, "Login")
+    object Signup : BottomNavItem("signup", Icons.Default.Person, "Signup")
     object Home : BottomNavItem("home", Icons.Default.Home, "Home")
     object Search : BottomNavItem("search", Icons.Default.Search, "Search")
     object Profile : BottomNavItem("profile", Icons.Default.Person, "Profile")

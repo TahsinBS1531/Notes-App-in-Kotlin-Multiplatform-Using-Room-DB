@@ -27,6 +27,7 @@ sealed class HomeEvent{
     data class updateSubTask(val id: Long, val subTask: List<String>) : HomeEvent()
     data class updateProgression(val id: Long, val progression: Float) : HomeEvent()
     data class updateCompletedSubtask(val id: Long, val subTask: List<String>) : HomeEvent()
+    object onSignOut : HomeEvent()
 
 }
 

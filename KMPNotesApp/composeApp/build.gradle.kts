@@ -69,6 +69,7 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             api(libs.koin.core)
             implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewmodel)
             implementation(libs.koin.composeVM)
             val voyagerVersion = "1.1.0-beta02"
 
@@ -106,6 +107,10 @@ kotlin {
             //Gemini App
 //            implementation ("com.google.cloud:gapic-google-ai:1.0.0")
             implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
+            //Firebase
+            implementation("dev.gitlive:firebase-auth:2.1.0")
+            implementation("dev.gitlive:firebase-firestore:2.1.0")
+            implementation("dev.gitlive:firebase-storage:2.1.0")
 
 
 

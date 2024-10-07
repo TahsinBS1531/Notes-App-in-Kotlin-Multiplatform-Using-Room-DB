@@ -22,7 +22,7 @@ import androidx.compose.material.Chip
 import androidx.compose.material.ChipDefaults
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -67,7 +67,6 @@ import com.jetbrains.notes.ui.home.HomeViewModel
 import dev.icerock.moko.permissions.PermissionsController
 import me.sample.library.resources.Res
 import me.sample.library.resources.bulbimage
-import me.sample.library.resources.mobilelogo
 import me.sample.library.resources.website
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -183,6 +182,7 @@ fun AppSectionTitle(
     modifier: Modifier = Modifier,
     text: String,
     onEvent: (HomeEvent) -> Unit,
+    onNavigate: (BottomNavItem) -> Unit,
     viewModel: HomeViewModel,
     controller: PermissionsController
 ) {
@@ -192,9 +192,12 @@ fun AppSectionTitle(
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.align(Alignment.TopStart)
         )
-        IconButton(onClick = {}, modifier = Modifier.align(Alignment.TopEnd)) {
+        IconButton(onClick = {
+            onEvent(HomeEvent.onSignOut)
+            onNavigate(BottomNavItem.Login)
+        }, modifier = Modifier.align(Alignment.TopEnd)) {
             Icon(
-                Icons.Default.AccountCircle,
+                Icons.AutoMirrored.Filled.Logout,
                 contentDescription = "Account",
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(40.dp)
@@ -389,7 +392,7 @@ fun AppNewMiniCard(modifier: Modifier = Modifier) {
                     .padding(16.dp)
             ) {
                 Image(
-                    painter = painterResource(Res.drawable.mobilelogo),
+                    painter = painterResource(Res.drawable.bulbimage),
                     contentDescription = null,
                     modifier = Modifier
                         .align(Alignment.TopStart)
@@ -601,7 +604,10 @@ fun NoteListCard(note: Note, navController: NavController) {
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis
             )
-            Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Box(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         "Due : ${note.dateOfBirth}",

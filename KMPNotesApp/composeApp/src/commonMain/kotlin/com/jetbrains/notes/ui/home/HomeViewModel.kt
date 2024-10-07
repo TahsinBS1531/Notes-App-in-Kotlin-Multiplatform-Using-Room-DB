@@ -9,6 +9,7 @@ import com.jetbrains.notes.data.core.CoreViewModel
 import com.jetbrains.notes.data.model.local.Note
 import com.jetbrains.notes.data.model.local.NotesDao
 import com.jetbrains.notes.data.repository.LocalRepositoryImpl
+import com.jetbrains.notes.ui.auth.AuthService
 import dev.icerock.moko.permissions.DeniedAlwaysException
 import dev.icerock.moko.permissions.DeniedException
 import dev.icerock.moko.permissions.Permission
@@ -18,7 +19,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 
-class HomeViewModel(dao: NotesDao, val permissionsController: PermissionsController) :
+class HomeViewModel(
+    dao: NotesDao, val permissionsController: PermissionsController,
+    private val authService: AuthService,
+) :
     CoreViewModel<BaseViewState<HomeState>, HomeEvent>() {
     var permissionState by mutableStateOf(PermissionState.NotDetermined)
 
@@ -89,7 +93,7 @@ class HomeViewModel(dao: NotesDao, val permissionsController: PermissionsControl
                 getLabelList(event.label)
             }
 
-            is HomeEvent.getTaskById ->{
+            is HomeEvent.getTaskById -> {
                 getTaskById(event.id)
             }
 
@@ -100,12 +104,19 @@ class HomeViewModel(dao: NotesDao, val permissionsController: PermissionsControl
             is HomeEvent.updateProgression -> {
                 updateProgression(event.id, event.progression)
             }
+
             is HomeEvent.updateSubTask -> {
                 updateSubTask(event.id, event.subTask)
             }
 
             is HomeEvent.updateCompletedSubtask -> {
                 updateCompletedSubtask(event.id, event.subTask)
+            }
+
+            HomeEvent.onSignOut -> {
+                viewModelScope.launch {
+                    authService.signOut()
+                }
             }
         }
 
@@ -251,7 +262,8 @@ class HomeViewModel(dao: NotesDao, val permissionsController: PermissionsControl
         viewModelScope.launch {
             try {
                 permissionsController.providePermission(Permission.LOCATION)
-                permissionState = permissionsController.getPermissionState(Permission.COARSE_LOCATION)
+                permissionState =
+                    permissionsController.getPermissionState(Permission.COARSE_LOCATION)
                 println("Permission state while accepting it : $permissionState")
                 if (permissionState == PermissionState.Granted) {
                     permissionState = PermissionState.Granted
