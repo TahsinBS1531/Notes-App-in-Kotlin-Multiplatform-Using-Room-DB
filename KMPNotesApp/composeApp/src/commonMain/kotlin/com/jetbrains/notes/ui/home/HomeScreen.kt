@@ -98,13 +98,12 @@ fun HomeScreen(
     onNavigate:(BottomNavItem)-> Unit,
     viewModel2: HomeViewModel = viewModel(),
 ) {
+    val viewModel = koinViewModel<HomeViewModel>()
     val factory = rememberPermissionsControllerFactory()
     val controller = remember(factory) {
         factory.createPermissionsController()
     }
-    BindEffect(controller)
-
-    val viewModel = koinViewModel<HomeViewModel>()
+    BindEffect(viewModel.permissionsController)
 
 //    BindEffect(permissionsController)
     val uiState by viewModel.uiState.collectAsState()

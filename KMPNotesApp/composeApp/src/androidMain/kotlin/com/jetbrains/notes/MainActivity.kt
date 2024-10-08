@@ -45,7 +45,6 @@ class MainActivity : ComponentActivity() {
             )
         )
 
-
         val permissionUtil by permissionUtil()
         permissionUtil.askNotificationPermission()
 
@@ -74,7 +73,7 @@ class MainActivity : ComponentActivity() {
                 PermissionsController(applicationContext),
                 authService = AuthServiceImpl(Firebase.auth)
             )
-            viewModel.permissionsController.bind(this@MainActivity)
+//            viewModel.permissionsController.bind(this@MainActivity)
             //For Logging
             Napier.base(DebugAntilog())
 
